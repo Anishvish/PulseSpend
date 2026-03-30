@@ -1,0 +1,25 @@
+{
+  "expo": {
+    "name": "PulseSpend",
+    "slug": "pulsespend",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "dark",
+    "newArchEnabled": true,
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "android": {
+      "package": "com.pulsespend.app",
+      "permissions": [
+        "READ_SMS",
+        "READ_CONTACTS"
+      ]
+    },
+    "plugins": [
+      "expo-sqlite",
+      "expo-font",
+      "@react-native-community/datetimepicker"
+    ]
+  }
+}
