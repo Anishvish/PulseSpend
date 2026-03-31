@@ -1,6 +1,5 @@
 import { useMemo, useState } from "react";
 import {
-  Alert,
   FlatList,
   Modal,
   Pressable,
@@ -9,6 +8,7 @@ import {
   TextInput,
   View,
 } from "react-native";
+import { useShallow } from "zustand/react/shallow";
 
 import { EmptyState } from "@/components/EmptyState";
 import { FilterChip } from "@/components/FilterChip";
@@ -16,8 +16,8 @@ import { GlassCard } from "@/components/GlassCard";
 import { ScreenContainer } from "@/components/ScreenContainer";
 import { SectionHeader } from "@/components/SectionHeader";
 import { TransactionRow } from "@/components/TransactionRow";
-import { useBootstrap } from "@/hooks/useBootstrap";
 import { useTransactionStore } from "@/store/useTransactionStore";
+import { useDialog } from "@/hooks/useDialog";
 import { useAppTheme } from "@/theme/ThemeProvider";
 import { Transaction } from "@/types";
 import { groupDateLabel } from "@/utils/formatters";
@@ -25,13 +25,15 @@ import { groupDateLabel } from "@/utils/formatters";
 const CATEGORY_OPTIONS = ["Food", "Travel", "Shopping", "Bills", "Entertainment", "Others"];
 
 export function TransactionsScreen() {
-  useBootstrap();
   const theme = useAppTheme();
-  const { transactions, deleteTransaction, updateCategory } = useTransactionStore((state) => ({
-    transactions: state.transactions,
-    deleteTransaction: state.deleteTransaction,
-    updateCategory: state.updateCategory,
-  }));
+  const { showDialog } = useDialog();
+  const { transactions, deleteTransaction, updateCategory } = useTransactionStore(
+    useShallow((state) => ({
+      transactions: state.transactions,
+      deleteTransaction: state.deleteTransaction,
+      updateCategory: state.updateCategory,
+    }))
+  );
   const [selectedTx, setSelectedTx] = useState<Transaction | null>(null);
   const [customCategory, setCustomCategory] = useState("");
 
@@ -65,6 +67,7 @@ export function TransactionsScreen() {
           keyExtractor={(item) => item.title}
           contentContainerStyle={styles.listContent}
           showsVerticalScrollIndicator={false}
+          removeClippedSubviews
           renderItem={({ item }) => (
             <View style={styles.section}>
               <Text style={[styles.sectionTitle, { color: theme.colors.textSoft }]}>{item.title}</Text>
@@ -115,7 +118,7 @@ export function TransactionsScreen() {
                   const category = customCategory.trim() || "Others";
                   updateCategory(selectedTx.id, category);
                   setSelectedTx(null);
-                  Alert.alert("Updated", "Transaction category was saved.");
+                  showDialog("Updated", "Transaction category was saved.");
                 }}
               >
                 <Text style={styles.primaryText}>Save</Text>
@@ -135,7 +138,6 @@ const styles = StyleSheet.create({
   },
   listContent: {
     paddingHorizontal: 20,
-    paddingBottom: 120,
     paddingTop: 16,
     gap: 18,
   },

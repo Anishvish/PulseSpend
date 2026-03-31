@@ -1,5 +1,12 @@
 export type TransactionType = "debit" | "credit";
 
+export type AuthUser = {
+  id: number;
+  name: string;
+  email: string;
+  created_at: string;
+};
+
 export type Transaction = {
   id: number;
   amount: number;

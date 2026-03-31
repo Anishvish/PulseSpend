@@ -1,8 +1,9 @@
-import { Alert, Pressable, StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { Swipeable } from "react-native-gesture-handler";
 
 import { GlassCard } from "./GlassCard";
+import { useDialog } from "@/hooks/useDialog";
 import { useAppTheme } from "@/theme/ThemeProvider";
 import { Transaction } from "@/types";
 import { formatCurrency } from "@/utils/formatters";
@@ -15,6 +16,7 @@ type Props = {
 
 export function TransactionRow({ transaction, onDelete, onEditCategory }: Props) {
   const theme = useAppTheme();
+  const { showDialog } = useDialog();
 
   const renderRightActions = () => (
     <View style={styles.actions}>
@@ -24,9 +26,9 @@ export function TransactionRow({ transaction, onDelete, onEditCategory }: Props)
       <Pressable
         style={[styles.actionButton, { backgroundColor: theme.colors.danger }]}
         onPress={() =>
-          Alert.alert("Delete transaction", "This transaction will be removed permanently.", [
-            { text: "Cancel", style: "cancel" },
-            { text: "Delete", style: "destructive", onPress: () => onDelete(transaction.id) },
+          showDialog("Delete transaction", "This transaction will be removed permanently.", [
+            { label: "Cancel", variant: "secondary" },
+            { label: "Delete", variant: "danger", onPress: () => onDelete(transaction.id) },
           ])
         }
       >

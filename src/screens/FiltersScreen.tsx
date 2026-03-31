@@ -2,24 +2,25 @@ import { useState } from "react";
 import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import dayjs from "dayjs";
+import { useShallow } from "zustand/react/shallow";
 
 import { FilterChip } from "@/components/FilterChip";
 import { GlassCard } from "@/components/GlassCard";
 import { ScreenContainer } from "@/components/ScreenContainer";
 import { SectionHeader } from "@/components/SectionHeader";
-import { useBootstrap } from "@/hooks/useBootstrap";
 import { useTransactionStore } from "@/store/useTransactionStore";
 import { useAppTheme } from "@/theme/ThemeProvider";
 
 export function FiltersScreen() {
-  useBootstrap();
   const theme = useAppTheme();
-  const { filters, availableCategories, availableApps, applyFilters } = useTransactionStore((state) => ({
-    filters: state.filters,
-    availableCategories: state.availableCategories,
-    availableApps: state.availableApps,
-    applyFilters: state.applyFilters,
-  }));
+  const { filters, availableCategories, availableApps, applyFilters } = useTransactionStore(
+    useShallow((state) => ({
+      filters: state.filters,
+      availableCategories: state.availableCategories,
+      availableApps: state.availableApps,
+      applyFilters: state.applyFilters,
+    }))
+  );
   const [showStartPicker, setShowStartPicker] = useState(false);
   const [showEndPicker, setShowEndPicker] = useState(false);
 

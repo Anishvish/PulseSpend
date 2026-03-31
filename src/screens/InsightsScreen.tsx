@@ -1,21 +1,22 @@
 import { StyleSheet, Text, View } from "react-native";
+import { useShallow } from "zustand/react/shallow";
 
 import { GlassCard } from "@/components/GlassCard";
 import { InsightPill } from "@/components/InsightPill";
 import { ScreenContainer } from "@/components/ScreenContainer";
 import { SectionHeader } from "@/components/SectionHeader";
-import { useBootstrap } from "@/hooks/useBootstrap";
 import { useTransactionStore } from "@/store/useTransactionStore";
 import { useAppTheme } from "@/theme/ThemeProvider";
 import { formatCurrency } from "@/utils/formatters";
 
 export function InsightsScreen() {
-  useBootstrap();
   const theme = useAppTheme();
-  const { insights, summary } = useTransactionStore((state) => ({
-    insights: state.insights,
-    summary: state.summary,
-  }));
+  const { insights, summary } = useTransactionStore(
+    useShallow((state) => ({
+      insights: state.insights,
+      summary: state.summary,
+    }))
+  );
 
   return (
     <ScreenContainer>

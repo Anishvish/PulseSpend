@@ -1,25 +1,26 @@
 import { StyleSheet, Text, View } from "react-native";
 import { CartesianChart, Line, Pie, PolarChart } from "victory-native";
+import { useShallow } from "zustand/react/shallow";
 
 import { GlassCard } from "@/components/GlassCard";
 import { HeatmapGrid } from "@/components/HeatmapGrid";
 import { MetricCard } from "@/components/MetricCard";
 import { ScreenContainer } from "@/components/ScreenContainer";
 import { SectionHeader } from "@/components/SectionHeader";
-import { useBootstrap } from "@/hooks/useBootstrap";
 import { useTransactionStore } from "@/store/useTransactionStore";
 import { useAppTheme } from "@/theme/ThemeProvider";
 import { formatCurrency } from "@/utils/formatters";
 
 export function DashboardScreen() {
-  useBootstrap();
   const theme = useAppTheme();
-  const { summary, dailyTrend, categoryStats, insights } = useTransactionStore((state) => ({
-    summary: state.summary,
-    dailyTrend: state.dailyTrend,
-    categoryStats: state.categoryStats,
-    insights: state.insights,
-  }));
+  const { summary, dailyTrend, categoryStats, insights } = useTransactionStore(
+    useShallow((state) => ({
+      summary: state.summary,
+      dailyTrend: state.dailyTrend,
+      categoryStats: state.categoryStats,
+      insights: state.insights,
+    }))
+  );
 
   const lineData = dailyTrend.map((item) => ({ x: item.day, y: Number(item.total) }));
   const pieData = categoryStats.slice(0, 5).map((item, index) => ({

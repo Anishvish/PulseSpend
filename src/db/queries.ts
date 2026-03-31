@@ -1,16 +1,7 @@
 import dayjs from "dayjs";
 
 import { db, initializeDatabase } from "./database";
-import {
-  CategoryStat,
-  DailyTrendPoint,
-  InsightSnapshot,
-  MerchantStat,
-  Summary,
-  Transaction,
-  TransactionFilters,
-  TransactionInput,
-} from "@/types";
+import { CategoryStat, DailyTrendPoint, MerchantStat, Summary, Transaction, TransactionFilters, TransactionInput } from "@/types";
 
 initializeDatabase();
 
@@ -51,7 +42,12 @@ export function bulkInsertTransactions(list: TransactionInput[]) {
 
   db.withTransactionSync(() => {
     const duplicateCheck = db.prepareSync(
-      "SELECT id FROM transactions WHERE amount = ? AND date = ? AND merchant = ? LIMIT 1"
+      `SELECT id FROM transactions
+       WHERE amount = ?
+         AND type = ?
+         AND LOWER(COALESCE(merchant, '')) = LOWER(COALESCE(?, ''))
+         AND date(date) = date(?)
+       LIMIT 1`
     );
     const insertStatement = db.prepareSync(
       `INSERT INTO transactions (amount, merchant, category, app_source, type, date)
@@ -60,7 +56,7 @@ export function bulkInsertTransactions(list: TransactionInput[]) {
 
     try {
       for (const tx of list) {
-        const existing = duplicateCheck.executeSync([tx.amount, tx.date, tx.merchant]).getFirstSync();
+        const existing = duplicateCheck.executeSync([tx.amount, tx.type, tx.merchant, tx.date]).getFirstSync();
         if (existing) {
           continue;
         }
@@ -227,7 +223,7 @@ export function getDistinctApps() {
   );
 }
 
-export function getInsightSnapshot(): InsightSnapshot {
+export function getInsightSnapshot() {
   const now = dayjs();
   const thisWeekStart = now.startOf("week").toISOString();
   const lastWeekStart = now.subtract(1, "week").startOf("week").toISOString();

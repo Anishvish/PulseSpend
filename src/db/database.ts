@@ -13,6 +13,13 @@ export function initializeDatabase() {
 
   db.execSync(`
     PRAGMA journal_mode = WAL;
+    CREATE TABLE IF NOT EXISTS users (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      name TEXT NOT NULL,
+      email TEXT UNIQUE NOT NULL,
+      password_hash TEXT NOT NULL,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP
+    );
     CREATE TABLE IF NOT EXISTS transactions (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       amount REAL NOT NULL,
@@ -23,6 +30,7 @@ export function initializeDatabase() {
       date TEXT NOT NULL,
       created_at TEXT DEFAULT CURRENT_TIMESTAMP
     );
+    CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
     CREATE INDEX IF NOT EXISTS idx_date ON transactions(date);
     CREATE INDEX IF NOT EXISTS idx_category ON transactions(category);
     CREATE INDEX IF NOT EXISTS idx_app_source ON transactions(app_source);

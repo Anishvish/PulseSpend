@@ -1,15 +1,16 @@
 # PulseSpend
 
-PulseSpend is a premium offline-first UPI expense tracker built with Expo and React Native. It stores data locally in SQLite, parses UPI-style transaction messages, and surfaces analytics through a polished fintech-style dashboard.
+PulseSpend is a premium offline-first Expo app for tracking UPI spending from local sources. It stores everything in SQLite, supports secure local authentication, imports transactions from SMS and pasted email statements, and surfaces analytics through a polished fintech-style UI.
 
 ## Highlights
 
 - Offline-first architecture with local SQLite storage
+- Secure local auth with signup, login, session restore, biometrics, and password reset
+- SMS import for Android development/release builds
+- Offline email statement import from pasted bank email content
+- Duplicate-aware transaction ingestion across SMS and email
 - Indexed transaction queries with dynamic filters
-- SMS parsing for UPI expense detection on Android development builds
-- Email parsing groundwork for future inbox-based expense ingestion
-- Zustand state management
-- Dashboard with trends, category mix, heatmap, streaks, and insights
+- Dashboard with charts, heatmap, streaks, and merchant insights
 - CSV export for sharing or backup
 - Dark theme by default with persisted theme switching
 
@@ -19,16 +20,22 @@ PulseSpend is a premium offline-first UPI expense tracker built with Expo and Re
 - React Native
 - TypeScript
 - Expo SQLite
+- Expo Secure Store
+- Expo Local Authentication
+- Expo Crypto
 - Zustand
-- React Navigation bottom tabs
+- React Navigation
 - Victory Native XL
 - Reanimated
 - Day.js
+- bcryptjs
+- Jest + jest-expo
 
 ## Project Structure
 
 ```text
 src/
+  auth/
   components/
   db/
   hooks/
@@ -38,53 +45,58 @@ src/
   theme/
   types/
   utils/
+assets/
 ```
 
-## Features
+## Core Features
 
-### Dashboard
+### Authentication
 
-- Monthly spend and today spend metric cards
-- Daily spending line chart
-- Category distribution chart
-- Spending heatmap for the last 4 weeks
-- No-spend day streak
-- Smart budget alert messaging
+- Offline signup with locally stored users
+- Password hashing with `bcryptjs` plus Expo crypto-backed randomness
+- Secure session persistence with `expo-secure-store`
+- Optional biometric unlock using `expo-local-authentication`
+- Forgot password flow based on local user metadata
+- Local profile editing for name and email
 
-### Transactions
+### Transaction Ingestion
 
-- Grouped by date
-- Swipe actions for delete and category edit
-- Manual category override support
+- SMS parsing for UPI-style messages
+- Email import from pasted statement/email text
+- Duplicate-aware import flow across SMS and email
+- Rule-based categorization with manual override support
 
-### Filters
+### Dashboard and Insights
 
-- Date range filtering
-- Multi-select category filtering
-- Multi-select app source filtering
-- Amount range filtering
-- Merchant search
-
-### Insights
-
+- Monthly and daily spend cards
+- Daily trend chart
+- Category mix chart
+- Spending heatmap
+- No-spend streak
+- Favorite merchants
 - Weekly comparison
-- Top category
-- Top merchant
-- Highest single spend
-- Favorite merchant detection
+- Smart budget alerts
 
-### Settings
+### Utilities
 
-- Theme toggle
-- SMS re-sync
+- Advanced filters
 - CSV export
 - Local database reset
+- Themed in-app dialogs instead of plain native alerts
 
-## Data Layer
+## Database
 
-The SQLite database is initialized in [`src/db/database.ts`](C:\Users\KK COMPUTERS\Documents\PulseSpend\src\db\database.ts) and uses WAL mode for better local write performance.
+SQLite is initialized in [src/db/database.ts](C:\Users\KK COMPUTERS\Documents\PulseSpend\src\db\database.ts) with WAL mode enabled.
 
-### Schema
+### Tables
+
+`users`
+
+- `id INTEGER PRIMARY KEY AUTOINCREMENT`
+- `name TEXT NOT NULL`
+- `email TEXT UNIQUE NOT NULL`
+- `password_hash TEXT NOT NULL`
+- `created_at TEXT DEFAULT CURRENT_TIMESTAMP`
 
 `transactions`
 
@@ -99,74 +111,69 @@ The SQLite database is initialized in [`src/db/database.ts`](C:\Users\KK COMPUTE
 
 ### Indexes
 
+- `idx_users_email`
 - `idx_date`
 - `idx_category`
 - `idx_app_source`
 
-### Query APIs
+## Auth Flow
 
-Implemented in [`src/db/queries.ts`](C:\Users\KK COMPUTERS\Documents\PulseSpend\src\db\queries.ts):
+Main auth logic lives in [src/auth/authService.ts](C:\Users\KK COMPUTERS\Documents\PulseSpend\src\auth\authService.ts) and [src/hooks/useAuth.tsx](C:\Users\KK COMPUTERS\Documents\PulseSpend\src\hooks\useAuth.tsx).
 
-- `insertTransaction`
-- `bulkInsertTransactions`
-- `getTransactions`
-- `getSummary`
-- `getCategoryStats`
-- `getDailyTrend`
-- `getTopMerchants`
-- `deleteTransaction`
-- `updateCategory`
-- `resetDatabase`
+Implemented flows:
 
-## SMS Parsing
+- `signup(name, email, password)`
+- `login(email, password)`
+- `logout()`
+- `getCurrentUser()`
+- `resetPassword(name, email, newPassword)`
+- `updateProfile(userId, name, email)`
+- biometric unlock
 
-Implemented in [`src/utils/smsParser.ts`](C:\Users\KK COMPUTERS\Documents\PulseSpend\src\utils\smsParser.ts).
+## SMS and Email Import
 
-It detects common UPI transaction patterns such as:
+### SMS
 
-- `Rs.500 debited`
-- `₹500 paid to`
-- `UPI Ref`
+SMS parsing is implemented in [src/utils/smsParser.ts](C:\Users\KK COMPUTERS\Documents\PulseSpend\src\utils\smsParser.ts).
 
-Extracted fields:
+Important note:
 
-- amount
-- merchant
-- category
-- app source
-- type
-- date
+- Expo Go cannot read SMS inbox data.
+- SMS sync works in an Android development build or release APK because the native SMS module must be included in the app binary.
 
-## Email Spending Support
+### Email
 
-PulseSpend now includes parser groundwork in [`src/utils/emailParser.ts`](C:\Users\KK COMPUTERS\Documents\PulseSpend\src\utils\emailParser.ts) for transaction-style emails such as bank alerts, card charges, and merchant confirmations.
+Email import is implemented in [src/utils/emailParser.ts](C:\Users\KK COMPUTERS\Documents\PulseSpend\src\utils\emailParser.ts) and [src/hooks/useEmailSync.ts](C:\Users\KK COMPUTERS\Documents\PulseSpend\src\hooks\useEmailSync.ts).
 
-What is included:
+Current offline approach:
 
-- text-based transaction extraction from email subject/body
-- app source normalization to `Email`
-- automatic categorization using the existing merchant rules
-- batch parsing support that returns normalized transaction records
+- Paste one or more bank emails or statement blocks into the app
+- Use `---` between email blocks if importing multiple messages
+- Transactions are parsed locally and inserted into SQLite
 
-What is not yet included:
+This app does not currently connect to Gmail or IMAP because the product is intentionally offline-first and backend-free.
 
-- direct Gmail or IMAP sync
-- background mailbox permissions flow
-- account linking UI
+### Duplicate Handling
 
-Why this is staged:
+Bulk imports in [src/db/queries.ts](C:\Users\KK COMPUTERS\Documents\PulseSpend\src\db\queries.ts) skip duplicates using:
 
-- there is no backend in this app by design
-- Gmail access requires OAuth and online APIs
-- generic email sync is much more sensitive than SMS parsing and needs careful UX and privacy design
+- same amount
+- same transaction type
+- same normalized merchant
+- same calendar day
 
-Recommended next step:
+This helps avoid duplicate inserts when the same expense appears in both SMS and email imports.
 
-- support importing `.eml` files or forwarded plain-text statements for a fully offline flow
+## Screens
 
-## Android Notes
-
-SMS inbox reading requires a native Android capability and will not work inside Expo Go. Use an Android development build for the inbox sync feature.
+- Login
+- Signup
+- Forgot Password
+- Dashboard
+- Transactions
+- Filters
+- Insights
+- Settings
 
 ## Run Locally
 
@@ -175,33 +182,69 @@ npm install
 npx expo start
 ```
 
-To run with native SMS access on Android:
+For native capabilities such as SMS reading and full auth/native module validation:
 
 ```bash
 npx expo run:android
 ```
 
-## Validation Completed
+## Preview Build
 
-The project has been validated with:
+An EAS preview profile is included in [eas.json](C:\Users\KK COMPUTERS\Documents\PulseSpend\eas.json).
+
+To create an Android preview build:
+
+```bash
+npx eas build --platform android --profile preview
+```
+
+This is the recommended path for testing:
+
+- SMS import
+- Secure Store
+- biometric auth
+- other native modules outside Expo Go
+
+## Validation
+
+Validated commands:
 
 - `npm run typecheck`
+- `npm test`
 - `npx expo-doctor`
 
-Both pass successfully.
+## Tests
 
-## Production Considerations
+Auth tests live in [src/auth/authService.test.ts](C:\Users\KK COMPUTERS\Documents\PulseSpend\src\auth\authService.test.ts).
 
-- keep SMS/email parsing logic rule-based and testable
-- add onboarding and permissions education before inbox access
-- introduce import history tracking for ingestion sources
-- add local encryption if device-level threat protection becomes a requirement
-- consider recurring budget targets and local notifications for alerts
+Covered scenarios:
 
-## Future Ideas
+- signup success
+- duplicate email rejection
+- login success
+- login missing-account failure
+- password reset success
+- password reset metadata mismatch failure
+- session creation
+- profile update success
+- profile update duplicate-email rejection
 
-- offline email statement import
-- recurring merchant detection
-- monthly budgets by category
-- receipt attachment support
-- richer merchant insights and anomaly detection
+## Improvement Notes
+
+Areas already improved in this pass:
+
+- consistent in-app popup styling
+- centered auth screens
+- reduced startup work before auth
+- lazy tab screen loading
+- more resilient account creation and password hashing
+- offline email import and duplicate-aware ingestion
+- local profile editing
+
+Recommended next improvements:
+
+- import history with source labels and timestamps
+- unit tests for SMS/email parsing and dedupe rules
+- category budgets with local notifications
+- attachment-based `.eml` or CSV statement import
+- richer profile metadata for stronger password reset verification
