@@ -1,313 +1,278 @@
 # PulseSpend
 
-PulseSpend is a premium offline-first Expo app for tracking UPI spending from local sources. It stores everything in SQLite, supports secure local authentication, imports transactions from SMS, pasted email statements, and bank statement files, and surfaces analytics through a polished fintech-style UI.
+> **Offline-first personal expense intelligence for UPI-heavy lifestyles.**
 
-## Highlights
+PulseSpend is a premium React Native (Expo) mobile app that tracks your UPI spending entirely on-device. It ingests transactions from SMS, pasted email statements, and bank CSV/PDF files, stores everything in SQLite, and surfaces rich analytics through a fintech-grade UI — all without any backend or cloud dependency.
 
-- Offline-first architecture with local SQLite storage
-- Secure local auth with signup, login, session restore, biometrics, and password reset
-- SMS import for Android development/release builds
-- Offline email statement import from pasted bank email content
-- Bank statement import from CSV and text-based PDF files
-- Duplicate-aware transaction ingestion across SMS, email, and bank sources
-- Import history with source badges and duplicate summaries
-- Indexed transaction queries with dynamic filters
-- Dashboard with charts, heatmap, streaks, and merchant insights
-- CSV export for sharing or backup
-- Dark theme by default with persisted theme switching
+---
 
-## Stack
+## ✨ Features
 
-- Expo SDK 54
-- React Native
-- TypeScript
-- Expo SQLite
-- Expo Secure Store
-- Expo Local Authentication
-- Expo Crypto
-- Zustand
-- React Navigation
-- Victory Native XL
-- Reanimated
-- Day.js
-- bcryptjs
-- Jest + jest-expo
+### 🔐 Authentication & Security
+- **Local signup & login** — accounts stored securely in on-device SQLite
+- **Password hashing** — bcryptjs with Expo Crypto-backed randomness
+- **Secure sessions** — persisted via `expo-secure-store`
+- **Biometric unlock** — fingerprint / face unlock via `expo-local-authentication`
+- **Forgot password** — offline reset flow using local user metadata verification
+- **Profile editing** — update name and email locally with duplicate-email protection
 
-## Project Structure
+### 📥 Multi-Source Transaction Import
+- **SMS inbox sync** — auto-parse UPI transaction messages on Android dev/release builds
+- **Email statement import** — paste one or more bank email bodies (separate with `---`)
+- **Bank CSV import** — handles common column layouts (date, description, debit, credit)
+- **Bank PDF import** — extract transactions from text-based PDF statements
+- **Smart deduplication** — fuzzy merchant matching, amount tolerance, and date windowing across all sources
+- **Metadata merging** — richer merchant/category details from bank imports backfill older SMS entries
+- **Import history log** — every import run is recorded with source badges, file names, timestamps, parsed/inserted/duplicate counts
+
+### 📊 Dashboard & Analytics
+- **Monthly & daily spend cards** — real-time totals with debit counts
+- **Daily trend line chart** — 30-day spending curve via Victory Native
+- **Category mix donut chart** — top 5 category breakdown with animated slices
+- **Spending heatmap** — visual grid to spot dense spending clusters
+- **No-spend streak** — gamified tracking of consecutive zero-spend days
+- **Budget progress bar** — configurable monthly budget with progress indicator
+- **Smart notes** — AI-style contextual alerts when nearing budget limits
+
+### 💡 Insights
+- **Weekly delta** — percentage change vs. prior week
+- **Top category & merchant** — auto-detected from cumulative spend
+- **Highest single spend** — peak transaction surfaced instantly
+- **Favorite merchants** — top 3 merchants by volume
+- **Smart budget alerts** — proactive warning when budget utilization exceeds 90%
+
+### 🔍 Transactions & Filters
+- **Full transaction ledger** — scrollable list with swipe-to-delete
+- **Category chips** — quick filter by detected categories
+- **App source filter** — filter by originating app (SMS, Email, Bank)
+- **Amount range filter** — min/max amount sliders
+- **Date range filter** — start/end date pickers
+- **Search** — fuzzy merchant name search
+- **Manual category override** — tap to reassign any transaction's category
+
+### ⚙️ Settings & Utilities
+- **Theme switching** — dark/light mode with persisted preference
+- **CSV export** — share your filtered ledger as a CSV file
+- **Dashboard refresh** — force reload all computed metrics
+- **Database reset** — wipe all local data with confirmation dialog
+- **Logout** — clear secure session with confirmation
+- **In-app dialogs** — styled confirmation/alert popups instead of native alerts
+
+---
+
+## 🏗️ Tech Stack
+
+| Layer | Technology |
+|-------|-----------|
+| Framework | Expo SDK 54 + React Native 0.81 |
+| Language | TypeScript 5.9 |
+| Database | expo-sqlite (SQLite with WAL mode) |
+| State | Zustand |
+| Navigation | React Navigation (Bottom Tabs + Native Stack) |
+| Charts | Victory Native XL + React Native Skia |
+| Animations | React Native Reanimated |
+| Security | expo-secure-store, expo-local-authentication, expo-crypto, bcryptjs |
+| Date Handling | Day.js |
+| File Parsing | PapaParse (CSV), pdfjs-dist (PDF) |
+| Testing | Jest + jest-expo |
+
+---
+
+## 📁 Project Structure
 
 ```text
 src/
-  auth/
-  components/
-  db/
-  hooks/
-  navigation/
-  screens/
-  store/
-  theme/
-  types/
-  utils/
-assets/
+├── auth/           # Auth service, password hashing, and tests
+├── components/     # Reusable UI: GlassCard, MetricCard, HeatmapGrid, etc.
+├── db/             # SQLite database init, queries, and migrations
+├── hooks/          # useAuth, useBootstrap, useDialog, useSmsSync, useEmailSync
+├── navigation/     # RootNavigation with auth stack and bottom tabs
+├── screens/        # Dashboard, Transactions, Imports, Filters, Insights, Settings
+├── store/          # Zustand transaction store
+├── theme/          # Dark/light theme definitions and ThemeProvider
+├── types/          # TypeScript type definitions
+└── utils/          # SMS/email/CSV/PDF parsers, categorizer, deduplicator, normalizer
+assets/             # App icon and splash assets
 ```
 
-## Core Features
+---
 
-### Authentication
+## 🗄️ Database Schema
 
-- Offline signup with locally stored users
-- Password hashing with `bcryptjs` plus Expo crypto-backed randomness
-- Secure session persistence with `expo-secure-store`
-- Optional biometric unlock using `expo-local-authentication`
-- Forgot password flow based on local user metadata
-- Local profile editing for name and email
-
-### Transaction Ingestion
-
-- SMS parsing for UPI-style messages
-- Email import from pasted statement/email text
-- Bank statement import from CSV and text-based PDF files
-- Shared normalization and deduplication across SMS, email, and bank sources
-- Import history log with source badges, timestamps, and duplicate counts
-- Rule-based categorization with manual override support
-
-### Dashboard and Insights
-
-- Monthly and daily spend cards
-- Daily trend chart
-- Category mix chart
-- Spending heatmap
-- No-spend streak
-- Favorite merchants
-- Weekly comparison
-- Smart budget alerts
-
-### Utilities
-
-- Advanced filters
-- CSV export
-- Local database reset
-- Themed in-app dialogs instead of plain native alerts
-
-## Database
-
-SQLite is initialized in [src/db/database.ts](C:\Users\<userDirectory>\Documents\PulseSpend\src\db\database.ts) with WAL mode enabled.
+SQLite is initialized with WAL mode in `src/db/database.ts`. Schema migrations are applied automatically on startup.
 
 ### Tables
 
-`users`
+**`users`**
 
-- `id INTEGER PRIMARY KEY AUTOINCREMENT`
-- `name TEXT NOT NULL`
-- `email TEXT UNIQUE NOT NULL`
-- `password_hash TEXT NOT NULL`
-- `created_at TEXT DEFAULT CURRENT_TIMESTAMP`
+| Column | Type | Constraints |
+|--------|------|-------------|
+| id | INTEGER | PRIMARY KEY AUTOINCREMENT |
+| name | TEXT | NOT NULL |
+| email | TEXT | UNIQUE NOT NULL |
+| password_hash | TEXT | NOT NULL |
+| created_at | TEXT | DEFAULT CURRENT_TIMESTAMP |
 
-`transactions`
+**`transactions`**
 
-- `id INTEGER PRIMARY KEY AUTOINCREMENT`
-- `amount REAL NOT NULL`
-- `merchant TEXT`
-- `category TEXT`
-- `app_source TEXT`
-- `type TEXT`
-- `date TEXT`
-- `created_at TEXT DEFAULT CURRENT_TIMESTAMP`
+| Column | Type | Constraints |
+|--------|------|-------------|
+| id | INTEGER | PRIMARY KEY AUTOINCREMENT |
+| amount | REAL | NOT NULL |
+| merchant | TEXT | — |
+| category | TEXT | — |
+| app_source | TEXT | — |
+| source | TEXT | DEFAULT 'sms' |
+| type | TEXT | CHECK('debit', 'credit') NOT NULL |
+| date | TEXT | NOT NULL |
+| created_at | TEXT | DEFAULT CURRENT_TIMESTAMP |
 
-`import_events`
+**`import_events`**
 
-- `id INTEGER PRIMARY KEY AUTOINCREMENT`
-- `source TEXT NOT NULL`
-- `file_name TEXT`
-- `total_parsed INTEGER NOT NULL DEFAULT 0`
-- `inserted_count INTEGER NOT NULL DEFAULT 0`
-- `duplicates_skipped INTEGER NOT NULL DEFAULT 0`
-- `notes TEXT`
-- `created_at TEXT DEFAULT CURRENT_TIMESTAMP`
+| Column | Type | Constraints |
+|--------|------|-------------|
+| id | INTEGER | PRIMARY KEY AUTOINCREMENT |
+| source | TEXT | NOT NULL |
+| file_name | TEXT | — |
+| total_parsed | INTEGER | NOT NULL DEFAULT 0 |
+| inserted_count | INTEGER | NOT NULL DEFAULT 0 |
+| duplicates_skipped | INTEGER | NOT NULL DEFAULT 0 |
+| notes | TEXT | — |
+| created_at | TEXT | DEFAULT CURRENT_TIMESTAMP |
 
 ### Indexes
 
-- `idx_users_email`
-- `idx_date`
-- `idx_category`
-- `idx_app_source`
-- `idx_source`
-- `idx_import_events_created_at`
-- `idx_import_events_source`
+- `idx_users_email` — fast email lookup during login
+- `idx_date` — date-range queries on transactions
+- `idx_category` — category-based filtering
+- `idx_app_source` — filter by originating app
+- `idx_source` — filter by import source type
+- `idx_import_events_created_at` — recent imports ordering
+- `idx_import_events_source` — import history by source
 
-## Auth Flow
+### Migrations
 
-Main auth logic lives in [src/auth/authService.ts](C:\Users\<userDirectory>\Documents\PulseSpend\src\auth\authService.ts) and [src/hooks/useAuth.tsx](C:\Users\<userDirectory>\Documents\PulseSpend\src\hooks\useAuth.tsx).
+The `source` column on `transactions` was added post-initial release. The init function checks `PRAGMA table_info` and runs `ALTER TABLE` if the column is missing, ensuring the index is created only after the column exists.
 
-Implemented flows:
+---
 
-- `signup(name, email, password)`
-- `login(email, password)`
-- `logout()`
-- `getCurrentUser()`
-- `resetPassword(name, email, newPassword)`
-- `updateProfile(userId, name, email)`
-- biometric unlock
+## 🔄 Auth Flow
 
-## Import System
+Auth is handled by `src/auth/authService.ts` and `src/hooks/useAuth.tsx`.
 
-### SMS
+| Function | Purpose |
+|----------|---------|
+| `signup(name, email, password)` | Create local account with hashed password |
+| `login(email, password)` | Verify credentials and persist session |
+| `logout()` | Clear secure session |
+| `getCurrentUser()` | Restore session from secure store |
+| `resetPassword(name, email, newPassword)` | Offline reset with metadata verification |
+| `updateProfile(userId, name, email)` | Edit local profile with duplicate protection |
+| Biometric unlock | Optional fingerprint/face via expo-local-authentication |
 
-SMS parsing is implemented in [src/utils/smsParser.ts](C:\Users\<userDirectory>\Documents\PulseSpend\src\utils\smsParser.ts).
+---
 
-Important note:
+## 📲 Import System
 
-- Expo Go cannot read SMS inbox data.
-- SMS sync works in an Android development build or release APK because the native SMS module must be included in the app binary.
+### SMS Sync
+- Parses UPI transaction messages from the Android inbox
+- **Requires** a development build or release APK (Expo Go cannot access SMS)
+- Hook: `src/hooks/useSmsSync.ts` · Parser: `src/utils/smsParser.ts`
 
-### Email
+### Email Import
+- Paste bank email or statement text directly into the app
+- Supports multiple email blocks separated by `---`
+- Fully offline — no Gmail/IMAP connection needed
+- Hook: `src/hooks/useEmailSync.ts` · Parser: `src/utils/emailParser.ts`
 
-Email import is implemented in [src/utils/emailParser.ts](C:\Users\<userDirectory>\Documents\PulseSpend\src\utils\emailParser.ts) and [src/hooks/useEmailSync.ts](C:\Users\<userDirectory>\Documents\PulseSpend\src\hooks\useEmailSync.ts).
+### Bank Statement Import
+- **CSV**: Auto-detects date/description/debit/credit columns via PapaParse
+- **PDF**: Extracts text from selectable-text PDFs (scanned/image PDFs not supported)
+- Preview parsed transactions before importing
+- Screen: `src/screens/ImportScreen.tsx` · Parsers: `src/utils/csvParser.ts`, `src/utils/pdfParser.ts`
 
-Current offline approach:
+### Deduplication
+All import paths share a common deduplication engine (`src/utils/deduplicator.ts`):
+- Same transaction type and amount within tolerance
+- Date within a ±1 day window
+- Fuzzy-normalized merchant name matching
+- Richer metadata from bank imports is merged into existing records
 
-- Paste one or more bank emails or statement blocks into the app
-- Use `---` between email blocks if importing multiple messages
-- Transactions are parsed locally and inserted into SQLite
+---
 
-This app does not currently connect to Gmail or IMAP because the product is intentionally offline-first and backend-free.
+## 📱 Screens
 
-### Bank Statements
+| Screen | Description |
+|--------|-------------|
+| **Login** | Email + password with biometric option |
+| **Signup** | Create local account |
+| **Forgot Password** | Reset via name + email verification |
+| **Dashboard** | Spend cards, trend chart, category donut, heatmap, smart notes |
+| **Transactions** | Full ledger with search, swipe-delete, category editing |
+| **Imports** | Bank CSV/PDF import with preview, import history log |
+| **Filters** | Category, app source, amount range, and date filters |
+| **Insights** | Weekly delta, top categories/merchants, budget alerts |
+| **Settings** | Sync, export, theme, profile, reset, logout |
 
-Bank statement import is implemented in:
+---
 
-- [src/screens/ImportScreen.tsx](C:\Users\<userDirectory>\Documents\PulseSpend\src\screens\ImportScreen.tsx)
-- [src/utils/csvParser.ts](C:\Users\<userDirectory>\Documents\PulseSpend\src\utils\csvParser.ts)
-- [src/utils/pdfParser.ts](C:\Users\<userDirectory>\Documents\PulseSpend\src\utils\pdfParser.ts)
-- [src/utils/normalizer.ts](C:\Users\<userDirectory>\Documents\PulseSpend\src\utils\normalizer.ts)
-- [src/utils/deduplicator.ts](C:\Users\<userDirectory>\Documents\PulseSpend\src\utils\deduplicator.ts)
+## 🚀 Getting Started
 
-Current support:
+### Prerequisites
+- Node.js 18+
+- Expo CLI (`npm install -g expo-cli` or use `npx expo`)
 
-- CSV statements with common date/description/debit/credit column names
-- Text-based PDF statements
-- preview before import
-- import history with counts for parsed, inserted, and duplicate rows
-
-Note:
-
-- Scanned image PDFs are not OCR-processed yet. The current parser expects selectable text inside the PDF.
-
-### Duplicate Handling
-
-Bulk imports in [src/db/queries.ts](C:\Users\<userDirectory>\Documents\PulseSpend\src\db\queries.ts) skip duplicates using:
-
-- same transaction type
-- amount within tolerance
-- date within a 1-day window
-- fuzzy-normalized merchant matching
-- metadata merge when a bank import has richer merchant/category/source details
-
-This helps avoid duplicate inserts when the same expense appears in SMS, email, and bank statement imports.
-
-### Import History
-
-Every import path now logs an event into SQLite:
-
-- SMS inbox sync
-- pasted email import
-- bank CSV/PDF import
-
-The Imports screen shows:
-
-- source badges
-- timestamps
-- file names or notes
-- total parsed rows
-- inserted rows
-- duplicates skipped
-
-## Screens
-
-- Login
-- Signup
-- Forgot Password
-- Dashboard
-- Transactions
-- Imports
-- Filters
-- Insights
-- Settings
-
-## Run Locally
-
+### Run Locally
 ```bash
 npm install
 npx expo start
 ```
 
-For native capabilities such as SMS reading and full auth/native module validation:
-
+### Android Development Build (for SMS sync & native modules)
 ```bash
 npx expo run:android
 ```
 
-## Preview Build
-
-An EAS preview profile is included in [eas.json](C:\Users\<userDirectory>\Documents\PulseSpend\eas.json).
-
-To create an Android preview build:
-
+### EAS Preview Build
+An EAS preview profile is included in `eas.json`:
 ```bash
 npx eas build --platform android --profile preview
 ```
+This is recommended for testing SMS import, Secure Store, biometric auth, and other native modules outside Expo Go.
 
-This is the recommended path for testing:
+---
 
-- SMS import
-- Secure Store
-- biometric auth
-- other native modules outside Expo Go
+## ✅ Validation
 
-## Validation
+```bash
+npm run typecheck     # TypeScript compilation check
+npm test              # Jest test suite
+npx expo-doctor       # Expo dependency health check
+```
 
-Validated commands:
+---
 
-- `npm run typecheck`
-- `npm test`
-- `npx expo-doctor`
+## 🧪 Tests
 
-## Tests
+| Test File | Coverage |
+|-----------|----------|
+| `src/auth/authService.test.ts` | Signup, duplicate email, login, missing account, password reset, session, profile update |
+| `src/utils/importPipeline.test.ts` | CSV parsing, normalization, duplicate detection across merchants/dates |
 
-Auth tests live in [src/auth/authService.test.ts](C:\Users\<userDirectory>\Documents\PulseSpend\src\auth\authService.test.ts).
-Import and dedup tests live in [src/utils/importPipeline.test.ts](C:\Users\<userDirectory>\Documents\PulseSpend\src\utils\importPipeline.test.ts).
+---
 
-Covered scenarios:
+## 🗺️ Roadmap
 
-- signup success
-- duplicate email rejection
-- login success
-- login missing-account failure
-- password reset success
-- password reset metadata mismatch failure
-- session creation
-- profile update success
-- profile update duplicate-email rejection
-- CSV parsing normalization
-- duplicate detection across near-match merchant/date combinations
+- [ ] Category budgets with local push notifications
+- [ ] Attachment-based `.eml` and CSV import via file picker
+- [ ] OCR support for scanned/image PDF bank statements
+- [ ] Unit tests for SMS and email parsers
+- [ ] Richer profile metadata for stronger password reset verification
+- [ ] Monthly/weekly report generation with charts
+- [ ] Multi-currency support
 
-## Improvement Notes
+---
 
-Areas already improved in this pass:
+## 📄 License
 
-- consistent in-app popup styling
-- centered auth screens
-- reduced startup work before auth
-- lazy tab screen loading
-- more resilient account creation and password hashing
-- offline email import and duplicate-aware ingestion
-- bank statement import with CSV/PDF parsing
-- import history tracking with source badges and duplicate summaries
-- local profile editing
-
-Recommended next improvements:
-
-- import history with source labels and timestamps
-- unit tests for SMS/email parsing and dedupe rules
-- category budgets with local notifications
-- attachment-based `.eml` or CSV statement import
-- richer profile metadata for stronger password reset verification
+This project is private and not currently published under an open-source license.

@@ -11,6 +11,7 @@ export function initializeDatabase() {
     return;
   }
 
+  // Step 1: Enable WAL mode and create tables (without source-dependent indexes)
   db.execSync(`
     PRAGMA journal_mode = WAL;
     CREATE TABLE IF NOT EXISTS users (
@@ -45,16 +46,20 @@ export function initializeDatabase() {
     CREATE INDEX IF NOT EXISTS idx_date ON transactions(date);
     CREATE INDEX IF NOT EXISTS idx_category ON transactions(category);
     CREATE INDEX IF NOT EXISTS idx_app_source ON transactions(app_source);
-    CREATE INDEX IF NOT EXISTS idx_source ON transactions(source);
     CREATE INDEX IF NOT EXISTS idx_import_events_created_at ON import_events(created_at);
     CREATE INDEX IF NOT EXISTS idx_import_events_source ON import_events(source);
   `);
 
+  // Step 2: Migrate older schemas that lack the "source" column on transactions.
+  // This MUST run before creating the idx_source index, otherwise the index
+  // creation fails with "no such column: source" for upgraded databases.
   const columns = db.getAllSync<{ name: string }>("PRAGMA table_info(transactions)");
   if (!columns.some((column) => column.name === "source")) {
     db.execSync("ALTER TABLE transactions ADD COLUMN source TEXT DEFAULT 'sms';");
-    db.execSync("CREATE INDEX IF NOT EXISTS idx_source ON transactions(source);");
   }
+
+  // Step 3: Now the source column is guaranteed to exist — safe to create the index.
+  db.execSync("CREATE INDEX IF NOT EXISTS idx_source ON transactions(source);");
 
   initialized = true;
 }
