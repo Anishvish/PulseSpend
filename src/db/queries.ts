@@ -1,7 +1,19 @@
 import dayjs from "dayjs";
 
 import { db, initializeDatabase } from "./database";
-import { CategoryStat, DailyTrendPoint, MerchantStat, Summary, Transaction, TransactionFilters, TransactionInput } from "@/types";
+import {
+  CategoryStat,
+  DailyTrendPoint,
+  ImportEvent,
+  ImportEventInput,
+  MerchantStat,
+  Summary,
+  Transaction,
+  TransactionFilters,
+  TransactionInput,
+} from "@/types";
+import { getDuplicateSearchWindow, isDuplicateTransaction, shouldMergeTransaction } from "@/utils/deduplicator";
+import { normalizeTransactionInput } from "@/utils/normalizer";
 
 initializeDatabase();
 
@@ -12,19 +24,21 @@ function buildInClause(values: string[]) {
 }
 
 export function insertTransaction(tx: TransactionInput) {
+  const normalized = normalizeTransactionInput(tx);
   const statement = db.prepareSync(
-    `INSERT INTO transactions (amount, merchant, category, app_source, type, date)
-     VALUES (?, ?, ?, ?, ?, ?)`
+    `INSERT INTO transactions (amount, merchant, category, app_source, source, type, date)
+     VALUES (?, ?, ?, ?, ?, ?, ?)`
   );
 
   try {
     const result = statement.executeSync([
-      tx.amount,
-      tx.merchant,
-      tx.category,
-      tx.app_source,
-      tx.type,
-      tx.date,
+      normalized.amount,
+      normalized.merchant,
+      normalized.category,
+      normalized.app_source,
+      normalized.source,
+      normalized.type,
+      normalized.date,
     ]);
 
     return Number(result.lastInsertRowId);
@@ -34,30 +48,50 @@ export function insertTransaction(tx: TransactionInput) {
 }
 
 export function bulkInsertTransactions(list: TransactionInput[]) {
+  return importTransactions(list).inserted;
+}
+
+export function importTransactions(list: TransactionInput[]) {
   if (!list.length) {
-    return 0;
+    return {
+      totalParsed: 0,
+      inserted: 0,
+      duplicatesSkipped: 0,
+    };
   }
 
   let inserted = 0;
+  let duplicatesSkipped = 0;
+  type DuplicateCandidate = Pick<Transaction, "id" | "amount" | "merchant" | "category" | "app_source" | "source" | "type" | "date" | "created_at">;
 
   db.withTransactionSync(() => {
     const duplicateCheck = db.prepareSync(
-      `SELECT id FROM transactions
+      `SELECT id, amount, merchant, category, app_source, source, type, date, created_at FROM transactions
        WHERE amount = ?
          AND type = ?
-         AND LOWER(COALESCE(merchant, '')) = LOWER(COALESCE(?, ''))
-         AND date(date) = date(?)
-       LIMIT 1`
+         AND date BETWEEN ? AND ?
+       LIMIT 20`
     );
     const insertStatement = db.prepareSync(
-      `INSERT INTO transactions (amount, merchant, category, app_source, type, date)
-       VALUES (?, ?, ?, ?, ?, ?)`
+      `INSERT INTO transactions (amount, merchant, category, app_source, source, type, date)
+       VALUES (?, ?, ?, ?, ?, ?, ?)`
+    );
+    const mergeStatement = db.prepareSync(
+      "UPDATE transactions SET merchant = ?, category = ?, app_source = ?, source = ? WHERE id = ?"
     );
 
     try {
-      for (const tx of list) {
-        const existing = duplicateCheck.executeSync([tx.amount, tx.type, tx.merchant, tx.date]).getFirstSync();
-        if (existing) {
+      for (const rawTx of list) {
+        const tx = normalizeTransactionInput(rawTx);
+        const window = getDuplicateSearchWindow(tx.date);
+        const candidates = duplicateCheck.executeSync<DuplicateCandidate>([tx.amount, tx.type, window.start, window.end]).getAllSync();
+        const duplicate = candidates.find((candidate) => isDuplicateTransaction(tx, candidate));
+
+        if (duplicate) {
+          duplicatesSkipped += 1;
+          if (shouldMergeTransaction(tx, duplicate)) {
+            mergeStatement.executeSync([tx.merchant, tx.category, tx.app_source, tx.source, duplicate.id]);
+          }
           continue;
         }
 
@@ -66,6 +100,7 @@ export function bulkInsertTransactions(list: TransactionInput[]) {
           tx.merchant,
           tx.category,
           tx.app_source,
+          tx.source,
           tx.type,
           tx.date,
         ]);
@@ -74,10 +109,33 @@ export function bulkInsertTransactions(list: TransactionInput[]) {
     } finally {
       duplicateCheck.finalizeSync();
       insertStatement.finalizeSync();
+      mergeStatement.finalizeSync();
     }
   });
 
-  return inserted;
+  return {
+    totalParsed: list.length,
+    inserted,
+    duplicatesSkipped,
+  };
+}
+
+export function recordImportEvent(event: ImportEventInput) {
+  db.runSync(
+    `INSERT INTO import_events (source, file_name, total_parsed, inserted_count, duplicates_skipped, notes)
+     VALUES (?, ?, ?, ?, ?, ?)`,
+    [event.source, event.file_name, event.total_parsed, event.inserted_count, event.duplicates_skipped, event.notes]
+  );
+}
+
+export function getImportEvents(limit = 12) {
+  return db.getAllSync<ImportEvent>(
+    `SELECT id, source, file_name, total_parsed, inserted_count, duplicates_skipped, notes, created_at
+     FROM import_events
+     ORDER BY datetime(created_at) DESC, id DESC
+     LIMIT ?`,
+    [limit]
+  );
 }
 
 export function getTransactions(filters: TransactionFilters = {}) {
@@ -209,6 +267,7 @@ export function updateCategory(id: number, category: string) {
 
 export function resetDatabase() {
   db.runSync("DELETE FROM transactions");
+  db.runSync("DELETE FROM import_events");
 }
 
 export function getDistinctCategories() {

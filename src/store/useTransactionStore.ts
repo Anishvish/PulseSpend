@@ -6,6 +6,7 @@ import {
   getDailyTrend,
   getDistinctApps,
   getDistinctCategories,
+  getImportEvents,
   getSummary,
   getTopMerchants,
   getTransactions,
@@ -15,6 +16,7 @@ import {
 import {
   CategoryStat,
   DailyTrendPoint,
+  ImportEvent,
   InsightSnapshot,
   MerchantStat,
   Summary,
@@ -32,6 +34,7 @@ type StoreState = {
   insights: InsightSnapshot;
   availableCategories: string[];
   availableApps: string[];
+  importHistory: ImportEvent[];
   loading: boolean;
   loadTransactions: () => void;
   applyFilters: (filters: Partial<TransactionFilters>) => void;
@@ -67,6 +70,7 @@ export const useTransactionStore = create<StoreState>((set, get) => ({
   insights: defaultInsights,
   availableCategories: [],
   availableApps: [],
+  importHistory: [],
   loading: false,
   loadTransactions: () => {
     set({ loading: true });
@@ -117,6 +121,7 @@ export const useTransactionStore = create<StoreState>((set, get) => ({
       },
       availableCategories: getDistinctCategories().map((item) => item.category),
       availableApps: getDistinctApps().map((item) => item.app_source),
+      importHistory: getImportEvents(),
       loading: false,
     });
   },

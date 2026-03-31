@@ -1,4 +1,6 @@
 export type TransactionType = "debit" | "credit";
+export type TransactionSource = "sms" | "email" | "bank";
+export type ImportSource = TransactionSource;
 
 export type AuthUser = {
   id: number;
@@ -13,6 +15,7 @@ export type Transaction = {
   merchant: string;
   category: string;
   app_source: string;
+  source: TransactionSource;
   type: TransactionType;
   date: string;
   created_at: string;
@@ -52,6 +55,19 @@ export type MerchantStat = {
   merchant: string;
   total: number;
 };
+
+export type ImportEvent = {
+  id: number;
+  source: ImportSource;
+  file_name: string | null;
+  total_parsed: number;
+  inserted_count: number;
+  duplicates_skipped: number;
+  notes: string | null;
+  created_at: string;
+};
+
+export type ImportEventInput = Omit<ImportEvent, "id" | "created_at">;
 
 export type InsightSnapshot = {
   weeklyDelta: number;

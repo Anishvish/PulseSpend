@@ -1,6 +1,7 @@
 import dayjs from "dayjs";
 
 import { categorizeMerchant } from "./categorizer";
+import { normalizeDate } from "./normalizer";
 import { SmsExpenseCandidate } from "@/types";
 
 const AMOUNT_REGEX = /(?:Rs\.?|INR|₹)\s?([\d,]+(?:\.\d{1,2})?)/i;
@@ -42,8 +43,9 @@ export function parseUpiSms(message: SmsLike): SmsExpenseCandidate | null {
     merchant,
     category,
     app_source: appSource,
+    source: "sms",
     type,
-    date,
+    date: normalizeDate(date),
     reference,
     rawMessage: body,
   };

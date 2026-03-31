@@ -1,6 +1,7 @@
 import dayjs from "dayjs";
 
 import { categorizeMerchant } from "./categorizer";
+import { normalizeDate } from "./normalizer";
 import { SmsExpenseCandidate } from "@/types";
 
 const AMOUNT_REGEX = /(?:Rs\.?|INR|₹)\s?([\d,]+(?:\.\d{1,2})?)/i;
@@ -39,8 +40,9 @@ export function parseExpenseEmail(email: EmailLike): SmsExpenseCandidate | null 
     merchant,
     category: categorizeMerchant(merchant),
     app_source: "Email",
+    source: "email",
     type,
-    date: dayjs(email.date ?? Date.now()).toISOString(),
+    date: normalizeDate(email.date ?? dayjs().toISOString()),
     rawMessage: content,
   };
 }

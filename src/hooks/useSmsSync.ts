@@ -1,7 +1,7 @@
 import { useCallback } from "react";
 import { PermissionsAndroid, Platform } from "react-native";
 
-import { bulkInsertTransactions } from "@/db/queries";
+import { importTransactions, recordImportEvent } from "@/db/queries";
 import { useTransactionStore } from "@/store/useTransactionStore";
 import { parseSmsBatch } from "@/utils/smsParser";
 
@@ -53,11 +53,23 @@ export function useSmsSync() {
         (_count, smsList) => {
           try {
             const parsed = parseSmsBatch(JSON.parse(smsList));
-            const inserted = bulkInsertTransactions(parsed);
+            const summary = importTransactions(parsed);
+            recordImportEvent({
+              source: "sms",
+              file_name: null,
+              total_parsed: summary.totalParsed,
+              inserted_count: summary.inserted,
+              duplicates_skipped: summary.duplicatesSkipped,
+              notes: summary.inserted
+                ? "Inbox sync completed."
+                : "No new UPI entries were added from inbox sync.",
+            });
             refreshFromDB();
             resolve({
-              inserted,
-              message: inserted ? `Imported ${inserted} transactions.` : "No new UPI transactions found.",
+              inserted: summary.inserted,
+              message: summary.inserted
+                ? `Imported ${summary.inserted} SMS transactions and skipped ${summary.duplicatesSkipped} duplicates.`
+                : "No new UPI transactions found. Matching duplicates may already exist.",
             });
           } catch {
             resolve({ inserted: 0, message: "Unable to parse SMS data." });

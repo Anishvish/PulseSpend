@@ -1,6 +1,6 @@
 # PulseSpend
 
-PulseSpend is a premium offline-first Expo app for tracking UPI spending from local sources. It stores everything in SQLite, supports secure local authentication, imports transactions from SMS and pasted email statements, and surfaces analytics through a polished fintech-style UI.
+PulseSpend is a premium offline-first Expo app for tracking UPI spending from local sources. It stores everything in SQLite, supports secure local authentication, imports transactions from SMS, pasted email statements, and bank statement files, and surfaces analytics through a polished fintech-style UI.
 
 ## Highlights
 
@@ -8,7 +8,9 @@ PulseSpend is a premium offline-first Expo app for tracking UPI spending from lo
 - Secure local auth with signup, login, session restore, biometrics, and password reset
 - SMS import for Android development/release builds
 - Offline email statement import from pasted bank email content
-- Duplicate-aware transaction ingestion across SMS and email
+- Bank statement import from CSV and text-based PDF files
+- Duplicate-aware transaction ingestion across SMS, email, and bank sources
+- Import history with source badges and duplicate summaries
 - Indexed transaction queries with dynamic filters
 - Dashboard with charts, heatmap, streaks, and merchant insights
 - CSV export for sharing or backup
@@ -63,7 +65,9 @@ assets/
 
 - SMS parsing for UPI-style messages
 - Email import from pasted statement/email text
-- Duplicate-aware import flow across SMS and email
+- Bank statement import from CSV and text-based PDF files
+- Shared normalization and deduplication across SMS, email, and bank sources
+- Import history log with source badges, timestamps, and duplicate counts
 - Rule-based categorization with manual override support
 
 ### Dashboard and Insights
@@ -109,12 +113,26 @@ SQLite is initialized in [src/db/database.ts](C:\Users\KK COMPUTERS\Documents\Pu
 - `date TEXT`
 - `created_at TEXT DEFAULT CURRENT_TIMESTAMP`
 
+`import_events`
+
+- `id INTEGER PRIMARY KEY AUTOINCREMENT`
+- `source TEXT NOT NULL`
+- `file_name TEXT`
+- `total_parsed INTEGER NOT NULL DEFAULT 0`
+- `inserted_count INTEGER NOT NULL DEFAULT 0`
+- `duplicates_skipped INTEGER NOT NULL DEFAULT 0`
+- `notes TEXT`
+- `created_at TEXT DEFAULT CURRENT_TIMESTAMP`
+
 ### Indexes
 
 - `idx_users_email`
 - `idx_date`
 - `idx_category`
 - `idx_app_source`
+- `idx_source`
+- `idx_import_events_created_at`
+- `idx_import_events_source`
 
 ## Auth Flow
 
@@ -130,7 +148,7 @@ Implemented flows:
 - `updateProfile(userId, name, email)`
 - biometric unlock
 
-## SMS and Email Import
+## Import System
 
 ### SMS
 
@@ -153,16 +171,55 @@ Current offline approach:
 
 This app does not currently connect to Gmail or IMAP because the product is intentionally offline-first and backend-free.
 
+### Bank Statements
+
+Bank statement import is implemented in:
+
+- [src/screens/ImportScreen.tsx](C:\Users\KK COMPUTERS\Documents\PulseSpend\src\screens\ImportScreen.tsx)
+- [src/utils/csvParser.ts](C:\Users\KK COMPUTERS\Documents\PulseSpend\src\utils\csvParser.ts)
+- [src/utils/pdfParser.ts](C:\Users\KK COMPUTERS\Documents\PulseSpend\src\utils\pdfParser.ts)
+- [src/utils/normalizer.ts](C:\Users\KK COMPUTERS\Documents\PulseSpend\src\utils\normalizer.ts)
+- [src/utils/deduplicator.ts](C:\Users\KK COMPUTERS\Documents\PulseSpend\src\utils\deduplicator.ts)
+
+Current support:
+
+- CSV statements with common date/description/debit/credit column names
+- Text-based PDF statements
+- preview before import
+- import history with counts for parsed, inserted, and duplicate rows
+
+Note:
+
+- Scanned image PDFs are not OCR-processed yet. The current parser expects selectable text inside the PDF.
+
 ### Duplicate Handling
 
 Bulk imports in [src/db/queries.ts](C:\Users\KK COMPUTERS\Documents\PulseSpend\src\db\queries.ts) skip duplicates using:
 
-- same amount
 - same transaction type
-- same normalized merchant
-- same calendar day
+- amount within tolerance
+- date within a 1-day window
+- fuzzy-normalized merchant matching
+- metadata merge when a bank import has richer merchant/category/source details
 
-This helps avoid duplicate inserts when the same expense appears in both SMS and email imports.
+This helps avoid duplicate inserts when the same expense appears in SMS, email, and bank statement imports.
+
+### Import History
+
+Every import path now logs an event into SQLite:
+
+- SMS inbox sync
+- pasted email import
+- bank CSV/PDF import
+
+The Imports screen shows:
+
+- source badges
+- timestamps
+- file names or notes
+- total parsed rows
+- inserted rows
+- duplicates skipped
 
 ## Screens
 
@@ -171,6 +228,7 @@ This helps avoid duplicate inserts when the same expense appears in both SMS and
 - Forgot Password
 - Dashboard
 - Transactions
+- Imports
 - Filters
 - Insights
 - Settings
@@ -216,6 +274,7 @@ Validated commands:
 ## Tests
 
 Auth tests live in [src/auth/authService.test.ts](C:\Users\KK COMPUTERS\Documents\PulseSpend\src\auth\authService.test.ts).
+Import and dedup tests live in [src/utils/importPipeline.test.ts](C:\Users\KK COMPUTERS\Documents\PulseSpend\src\utils\importPipeline.test.ts).
 
 Covered scenarios:
 
@@ -228,6 +287,8 @@ Covered scenarios:
 - session creation
 - profile update success
 - profile update duplicate-email rejection
+- CSV parsing normalization
+- duplicate detection across near-match merchant/date combinations
 
 ## Improvement Notes
 
@@ -239,6 +300,8 @@ Areas already improved in this pass:
 - lazy tab screen loading
 - more resilient account creation and password hashing
 - offline email import and duplicate-aware ingestion
+- bank statement import with CSV/PDF parsing
+- import history tracking with source badges and duplicate summaries
 - local profile editing
 
 Recommended next improvements:

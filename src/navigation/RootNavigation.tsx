@@ -12,6 +12,7 @@ import { LoginScreen } from "@/screens/LoginScreen";
 import { SignupScreen } from "@/screens/SignupScreen";
 import { DashboardScreen } from "@/screens/DashboardScreen";
 import { FiltersScreen } from "@/screens/FiltersScreen";
+import { ImportScreen } from "@/screens/ImportScreen";
 import { InsightsScreen } from "@/screens/InsightsScreen";
 import { SettingsScreen } from "@/screens/SettingsScreen";
 import { TransactionsScreen } from "@/screens/TransactionsScreen";
@@ -74,6 +75,7 @@ export function RootNavigation() {
               const icons: Record<string, keyof typeof MaterialCommunityIcons.glyphMap> = {
                 Dashboard: "view-dashboard-outline",
                 Transactions: "swap-horizontal-circle-outline",
+                Imports: "file-import-outline",
                 Filters: "tune-variant",
                 Insights: "chart-timeline-variant",
                 Settings: "cog-outline",
@@ -93,6 +95,7 @@ export function RootNavigation() {
         >
           <Tab.Screen name="Dashboard" component={DashboardScreen} />
           <Tab.Screen name="Transactions" component={TransactionsScreen} />
+          <Tab.Screen name="Imports" component={ImportScreen} />
           <Tab.Screen name="Filters" component={FiltersScreen} />
           <Tab.Screen name="Insights" component={InsightsScreen} />
           <Tab.Screen name="Settings" component={SettingsScreen} />

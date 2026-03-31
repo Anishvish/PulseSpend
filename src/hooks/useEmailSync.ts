@@ -1,6 +1,6 @@
 import { useCallback } from "react";
 
-import { bulkInsertTransactions } from "@/db/queries";
+import { importTransactions, recordImportEvent } from "@/db/queries";
 import { useTransactionStore } from "@/store/useTransactionStore";
 import { parseExpenseEmail } from "@/utils/emailParser";
 
@@ -53,13 +53,21 @@ export function useEmailSync() {
       };
     }
 
-    const inserted = bulkInsertTransactions(parsed);
+    const summary = importTransactions(parsed);
+    recordImportEvent({
+      source: "email",
+      file_name: null,
+      total_parsed: summary.totalParsed,
+      inserted_count: summary.inserted,
+      duplicates_skipped: summary.duplicatesSkipped,
+      notes: "Parsed from pasted email or statement text.",
+    });
     refreshFromDB();
 
     return {
-      inserted,
-      message: inserted
-        ? `Imported ${inserted} transactions from email text. Duplicate matches were skipped automatically.`
+      inserted: summary.inserted,
+      message: summary.inserted
+        ? `Imported ${summary.inserted} transactions from email text and skipped ${summary.duplicatesSkipped} duplicates.`
         : "No new transactions were imported. Matching SMS/email duplicates may already exist.",
     };
   }, [refreshFromDB]);
