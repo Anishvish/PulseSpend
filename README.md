@@ -90,7 +90,7 @@ assets/
 
 ## Database
 
-SQLite is initialized in [src/db/database.ts](C:\Users\KK COMPUTERS\Documents\PulseSpend\src\db\database.ts) with WAL mode enabled.
+SQLite is initialized in [src/db/database.ts](C:\Users\<userDirectory>\Documents\PulseSpend\src\db\database.ts) with WAL mode enabled.
 
 ### Tables
 
@@ -136,7 +136,7 @@ SQLite is initialized in [src/db/database.ts](C:\Users\KK COMPUTERS\Documents\Pu
 
 ## Auth Flow
 
-Main auth logic lives in [src/auth/authService.ts](C:\Users\KK COMPUTERS\Documents\PulseSpend\src\auth\authService.ts) and [src/hooks/useAuth.tsx](C:\Users\KK COMPUTERS\Documents\PulseSpend\src\hooks\useAuth.tsx).
+Main auth logic lives in [src/auth/authService.ts](C:\Users\<userDirectory>\Documents\PulseSpend\src\auth\authService.ts) and [src/hooks/useAuth.tsx](C:\Users\<userDirectory>\Documents\PulseSpend\src\hooks\useAuth.tsx).
 
 Implemented flows:
 
@@ -152,7 +152,7 @@ Implemented flows:
 
 ### SMS
 
-SMS parsing is implemented in [src/utils/smsParser.ts](C:\Users\KK COMPUTERS\Documents\PulseSpend\src\utils\smsParser.ts).
+SMS parsing is implemented in [src/utils/smsParser.ts](C:\Users\<userDirectory>\Documents\PulseSpend\src\utils\smsParser.ts).
 
 Important note:
 
@@ -161,7 +161,7 @@ Important note:
 
 ### Email
 
-Email import is implemented in [src/utils/emailParser.ts](C:\Users\KK COMPUTERS\Documents\PulseSpend\src\utils\emailParser.ts) and [src/hooks/useEmailSync.ts](C:\Users\KK COMPUTERS\Documents\PulseSpend\src\hooks\useEmailSync.ts).
+Email import is implemented in [src/utils/emailParser.ts](C:\Users\<userDirectory>\Documents\PulseSpend\src\utils\emailParser.ts) and [src/hooks/useEmailSync.ts](C:\Users\<userDirectory>\Documents\PulseSpend\src\hooks\useEmailSync.ts).
 
 Current offline approach:
 
@@ -175,11 +175,11 @@ This app does not currently connect to Gmail or IMAP because the product is inte
 
 Bank statement import is implemented in:
 
-- [src/screens/ImportScreen.tsx](C:\Users\KK COMPUTERS\Documents\PulseSpend\src\screens\ImportScreen.tsx)
-- [src/utils/csvParser.ts](C:\Users\KK COMPUTERS\Documents\PulseSpend\src\utils\csvParser.ts)
-- [src/utils/pdfParser.ts](C:\Users\KK COMPUTERS\Documents\PulseSpend\src\utils\pdfParser.ts)
-- [src/utils/normalizer.ts](C:\Users\KK COMPUTERS\Documents\PulseSpend\src\utils\normalizer.ts)
-- [src/utils/deduplicator.ts](C:\Users\KK COMPUTERS\Documents\PulseSpend\src\utils\deduplicator.ts)
+- [src/screens/ImportScreen.tsx](C:\Users\<userDirectory>\Documents\PulseSpend\src\screens\ImportScreen.tsx)
+- [src/utils/csvParser.ts](C:\Users\<userDirectory>\Documents\PulseSpend\src\utils\csvParser.ts)
+- [src/utils/pdfParser.ts](C:\Users\<userDirectory>\Documents\PulseSpend\src\utils\pdfParser.ts)
+- [src/utils/normalizer.ts](C:\Users\<userDirectory>\Documents\PulseSpend\src\utils\normalizer.ts)
+- [src/utils/deduplicator.ts](C:\Users\<userDirectory>\Documents\PulseSpend\src\utils\deduplicator.ts)
 
 Current support:
 
@@ -194,7 +194,7 @@ Note:
 
 ### Duplicate Handling
 
-Bulk imports in [src/db/queries.ts](C:\Users\KK COMPUTERS\Documents\PulseSpend\src\db\queries.ts) skip duplicates using:
+Bulk imports in [src/db/queries.ts](C:\Users\<userDirectory>\Documents\PulseSpend\src\db\queries.ts) skip duplicates using:
 
 - same transaction type
 - amount within tolerance
@@ -248,7 +248,7 @@ npx expo run:android
 
 ## Preview Build
 
-An EAS preview profile is included in [eas.json](C:\Users\KK COMPUTERS\Documents\PulseSpend\eas.json).
+An EAS preview profile is included in [eas.json](C:\Users\<userDirectory>\Documents\PulseSpend\eas.json).
 
 To create an Android preview build:
 
@@ -273,8 +273,8 @@ Validated commands:
 
 ## Tests
 
-Auth tests live in [src/auth/authService.test.ts](C:\Users\KK COMPUTERS\Documents\PulseSpend\src\auth\authService.test.ts).
-Import and dedup tests live in [src/utils/importPipeline.test.ts](C:\Users\KK COMPUTERS\Documents\PulseSpend\src\utils\importPipeline.test.ts).
+Auth tests live in [src/auth/authService.test.ts](C:\Users\<userDirectory>\Documents\PulseSpend\src\auth\authService.test.ts).
+Import and dedup tests live in [src/utils/importPipeline.test.ts](C:\Users\<userDirectory>\Documents\PulseSpend\src\utils\importPipeline.test.ts).
 
 Covered scenarios:
 
