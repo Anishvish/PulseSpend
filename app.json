@@ -26,6 +26,12 @@
       "expo-font",
       "@react-native-community/datetimepicker",
       "expo-secure-store"
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "cb48b77f-bd9d-4470-8f22-358b97d2934c"
+      }
+    },
+    "owner": "legacyanish"
   }
 }
